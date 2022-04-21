@@ -20,6 +20,7 @@ interface Letter {
   state: LetterState;
 }
 
+// Letter Map
 const LETTERS = (() => {
   const ret: { [key: string]: boolean } = {};
   for (let charCode = 97; charCode < 97 + 26; charCode++) {
@@ -106,10 +107,14 @@ export class WordleComponent {
   }
 
   handleClickKey(key: string) {
+    // Don't trigger key press when user has won the game.
     if (this.won) {
       return;
     }
+    // If key is a letter, update the text in the corresponding letter object.
     if (LETTERS[key.toLowerCase()]) {
+      // Only allow typing letters in the current try. Don't go over if the
+      // current try has not been submitted.
       if (this.currentLetterIndex < (this.numberSubTries + 1) * WORD_LENGTH) {
         this.setLetter(key);
         this.currentLetterIndex++;
@@ -158,6 +163,10 @@ export class WordleComponent {
       let state = LetterState.WRONG;
       // Need to make sure only performs the check when the letter has not been
       // checked before.
+      //
+      // For example, if the target word is "happy", then the first "a" user
+      // types should be checked, but the second "a" should not, because there
+      // is no more "a" left in the target word that has not been checked.
       if (expected === got && targetWordLetterCounts[got] > 0) {
         targetWordLetterCounts[expected]--;
         state = LetterState.FULL_MATCH;
@@ -175,6 +184,7 @@ export class WordleComponent {
     const tryContainer = this.tryContainers.get(this.numberSubTries)
       ?.nativeElement as HTMLElement;
     const letterEles = tryContainer.querySelectorAll('.letter-container');
+    // Adding state to tiles for colour matching.
     for (let i = 0; i < letterEles.length; i++) {
       curTry.letters[i].state = states[i];
     }
@@ -185,6 +195,9 @@ export class WordleComponent {
       const curStoredState = this.curLetterStates[got];
       const targetState = states[i];
       //Override with better result.
+      //
+      // For example, if "A" was partial match in previous try, and becomes full
+      // match in the current try, we update the key state to the full match.
       if (curStoredState == null || targetState > curStoredState) {
         this.curLetterStates[got] = targetState;
       }
